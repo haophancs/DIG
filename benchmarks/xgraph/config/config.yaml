@@ -1,0 +1,7 @@
+defaults:
+  - models: gcn
+  - datasets: ba_community
+  - explainers: subgraphx 
+device_id: 0
+model_name: GCN_3l
+record_filename: none

@@ -1,0 +1,3 @@
+dataset_root: '/tmp/datasets'
+dataset_name: 'ba_community'
+seed: 2

@@ -1,0 +1,43 @@
+explanation_result_dir: ''
+explainer_name: 'gnn_explainer'
+sparsity: 0.5
+param:
+  bbbp:
+    lr: 0.001
+    epochs: 1000
+  ba_shapes:
+    lr: 0.001
+    epochs: 1000
+  graph_sst2:
+    lr: 0.001
+    epochs: 1000
+  graph_sst5:
+    lr: 0.001
+    epochs: 1000
+  twitter:
+    lr: 0.001
+    epochs: 1000
+  ba_community:
+    lr: 0.001
+    epochs: 1000
+  tree_grid:
+    lr: 0.001
+    epochs: 1000
+  tree_cycle:
+    lr: 0.001
+    epochs: 1000
+  ba_2motifs:
+    lr: 0.001
+    epochs: 1000
+  bace:
+    lr: 0.001
+    epochs: 1000
+  tox21:
+    lr: 0.001
+    epochs: 1000
+  mutag:
+    lr: 0.001
+    epochs: 1000
+  mutagenicity:
+    lr: 0.001
+    epochs: 1000
