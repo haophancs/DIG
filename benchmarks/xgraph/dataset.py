@@ -3,22 +3,25 @@ from torch.utils.data import random_split, Subset
 from torch_geometric.data import DataLoader
 from dig.xgraph.dataset import MoleculeDataset, SynGraphDataset, SentiGraphDataset, BA_LRP
 from torch import default_generator
+from copy import deepcopy
+import random
+import numpy as np
 
 
-def get_dataset(dataset_root, dataset_name):
+def get_dataset(dataset_root, dataset_name, noise_conf=None):
     if dataset_name.lower() in list(MoleculeDataset.names.keys()):
-        return MoleculeDataset(root=dataset_root, name=dataset_name)
+        return MoleculeDataset(root=dataset_root, name=dataset_name, noise_conf=noise_conf)
     elif dataset_name.lower() in ['graph_sst2', 'graph_sst5', 'twitter']:
-        return SentiGraphDataset(root=dataset_root, name=dataset_name)
+        return SentiGraphDataset(root=dataset_root, name=dataset_name, noise_conf=noise_conf)
     elif dataset_name.lower() in list(SynGraphDataset.names.keys()):
-        return SynGraphDataset(root=dataset_root, name=dataset_name)
+        return SynGraphDataset(root=dataset_root, name=dataset_name, noise_conf=noise_conf)
     elif dataset_name.lower() in ['ba_lrp']:
         return BA_LRP(root=dataset_root)
     else:
         raise ValueError(f"{dataset_name} is not defined.")
 
 
-def get_dataloader(dataset, batch_size, random_split_flag=True, data_split_ratio=None, seed=2):
+def get_dataloader(dataset, batch_size, random_split_flag=True, data_split_ratio=None, seed=2, noise=None):
     """
     Args:
         dataset:

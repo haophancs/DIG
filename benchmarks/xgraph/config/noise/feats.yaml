@@ -1,0 +1,4 @@
+name: noise_feats
+prop: 0.20
+binary: False
+p: 0.5

@@ -7,7 +7,7 @@ from torch.optim import Adam
 from omegaconf import OmegaConf
 from utils import check_dir
 from gnnNets import get_gnnNets
-from dataset import get_dataset, get_dataloader
+from dataset import *
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import MultiStepLR
 
@@ -199,7 +199,9 @@ def main(config):
         device = torch.device('cpu')
 
     dataset = get_dataset(dataset_root=config.datasets.dataset_root,
-                          dataset_name=config.datasets.dataset_name)
+                          dataset_name=config.datasets.dataset_name,
+                          noise_conf=config.noise)
+
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
     if config.models.param.graph_classification:

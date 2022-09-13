@@ -14,8 +14,8 @@ def pipeline(config):
     # config.models.gnn_saving_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checkpoints')
     # config.explainers.explanation_result_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
     config.models.gnn_saving_dir = \
-        '/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/outputs/' \
-        '2022-04-28/02-03-41/checkpoints'
+        '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/' \
+        '2022-09-09/21-16-28/checkpoints'
 
     config.models.param = config.models.param[config.datasets.dataset_name]
     config.explainers.param = config.explainers.param[config.datasets.dataset_name]
@@ -28,7 +28,8 @@ def pipeline(config):
 
     # bbbp warning
     dataset = get_dataset(config.datasets.dataset_root,
-                          config.datasets.dataset_name)
+                          config.datasets.dataset_name,
+                          config.noise)
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
     if config.models.param.graph_classification:
@@ -65,29 +66,32 @@ def pipeline(config):
     x_collector = XCollector()
     if config.models.param.graph_classification:
         for i, data in enumerate(dataset[test_indices]):
-            index += 1
-            data.to(device)
-            if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
-                walks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
-                walks = {k: v.to(device) for k, v in walks.items()}
-                print(f"load example {test_indices[i]}.")
-                walks, masks, related_preds = \
-                    gnnlrp_explainer(data.x, data.edge_index,
-                                     sparsity=config.explainers.sparsity,
-                                     num_classes=dataset.num_classes,
-                                     edge_masks=walks)
-            else:
-                print(f"GNNLRP explain example {test_indices[i]}.")
-                walks, masks, related_preds = \
-                    gnnlrp_explainer(data.x, data.edge_index,
-                                     sparsity=config.explainers.sparsity,
-                                     num_classes=dataset.num_classes)
+            try:
+                index += 1
+                data.to(device)
+                if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
+                    walks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                    walks = {k: v.to(device) for k, v in walks.items()}
+                    print(f"load example {test_indices[i]}.")
+                    walks, masks, related_preds = \
+                        gnnlrp_explainer(data.x, data.edge_index,
+                                         sparsity=config.explainers.sparsity,
+                                         num_classes=dataset.num_classes,
+                                         edge_masks=walks)
+                else:
+                    print(f"GNNLRP explain example {test_indices[i]}.")
+                    walks, masks, related_preds = \
+                        gnnlrp_explainer(data.x, data.edge_index,
+                                         sparsity=config.explainers.sparsity,
+                                         num_classes=dataset.num_classes)
 
-                walks = {k: v.to('cpu') for k, v in walks.items()}
-                torch.save(walks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                    walks = {k: v.to('cpu') for k, v in walks.items()}
+                    torch.save(walks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
 
-            prediction = model(data).argmax(-1).item()
-            x_collector.collect_data(masks, related_preds, label=prediction)
+                prediction = model(data).argmax(-1).item()
+                x_collector.collect_data(masks, related_preds, label=prediction)
+            except:
+                continue
     else:
         data = dataset.data
         data.to(device)

@@ -190,8 +190,8 @@ class TrainModel(object):
 @hydra.main(config_path="config", config_name="config")
 def main(config):
     config.models.gnn_saving_dir = \
-        '/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/outputs/' \
-        '2022-05-21/10-11-56/checkpoints'
+        '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/' \
+        '2022-09-09/21-16-28/checkpoints'
     # config.models.gnn_saving_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checkpoints')
     config.models.param = config.models.param[config.datasets.dataset_name]
     print(OmegaConf.to_yaml(config))
@@ -202,7 +202,8 @@ def main(config):
         device = torch.device('cpu')
 
     dataset = get_dataset(dataset_root=config.datasets.dataset_root,
-                          dataset_name=config.datasets.dataset_name)
+                          dataset_name=config.datasets.dataset_name,
+                          noise_conf=config.noise)
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
     if config.models.param.graph_classification:

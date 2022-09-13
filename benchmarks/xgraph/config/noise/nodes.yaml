@@ -1,0 +1,6 @@
+name: noise_nodes
+prop: 0.20
+binary: False
+p: 0.5
+connectedness: medium
+c: 0.001

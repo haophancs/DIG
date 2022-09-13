@@ -5,6 +5,7 @@ import numpy as np
 from torch_geometric.utils import dense_to_sparse
 from torch_geometric.data import Data, InMemoryDataset, \
     download_url
+from .noise import add_noise_neighbours, add_noise_features
 
 try:
     from rdkit import Chem
@@ -162,8 +163,10 @@ class MoleculeDataset(InMemoryDataset):
                     slice(1, 3)],
     }
 
-    def __init__(self, root, name, transform=None, pre_transform=None,
+    def __init__(self, root, name, noise_conf=None, transform=None, pre_transform=None,
                  pre_filter=None):
+
+        self.noise_conf = noise_conf
 
         if Chem is None:
             raise ImportError('`MoleculeNet` requires `rdkit`.')
@@ -254,6 +257,23 @@ class MoleculeDataset(InMemoryDataset):
                 data_example = Data(x=torch.from_numpy(one_hot_feature).float(),
                                     edge_index=dense_to_sparse(torch.from_numpy(adj))[0],
                                     y=label)
+                if self.noise_conf.name == 'noise_nodes':
+                    data_example = add_noise_neighbours(
+                        data_example,
+                        prop_noise_nodes=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p,
+                        connectedness=self.noise_conf.connectedness,
+                        c=self.noise_conf.c,
+                        graph_classification=True
+                    )
+                elif self.noise_conf.name == 'noise_feats':
+                    data_example = add_noise_features(
+                        data_example,
+                        prop_noise_feats=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p
+                    )
                 data_list.append(data_example)
         else:
             with open(self.raw_paths[0], 'r') as f:
@@ -319,6 +339,24 @@ class MoleculeDataset(InMemoryDataset):
                 data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y,
                             smiles=smiles)
 
+                if self.noise_conf.name == 'noise_nodes':
+                    data = add_noise_neighbours(
+                        data,
+                        prop_noise_nodes=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p,
+                        connectedness=self.noise_conf.connectedness,
+                        c=self.noise_conf.c,
+                        graph_classification=True
+                    )
+                elif self.noise_conf.name == 'noise_feats':
+                    data = add_noise_features(
+                        data,
+                        prop_noise_feats=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p
+                    )
+
                 if self.pre_filter is not None and not self.pre_filter(data):
                     continue
 
@@ -327,6 +365,7 @@ class MoleculeDataset(InMemoryDataset):
 
                 data_list.append(data)
                 torch.save(data, os.path.join(self.processed_dir, f'tox21_{line_idx}.pt'))
+
         torch.save(self.collate(data_list), self.processed_paths[0])
 
     def __repr__(self):

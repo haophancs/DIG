@@ -1,4 +1,4 @@
-dataset_root: '/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/datasets'
+dataset_root: '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/datasets'
 dataset_name: 'graph_sst2'
 random_split_flag: False
 data_split_ratio: [0.8, 0.1, 0.1]

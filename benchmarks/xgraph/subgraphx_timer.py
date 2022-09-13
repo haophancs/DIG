@@ -30,7 +30,7 @@ def pipeline(config):
     torch.backends.cudnn.benchmark = False
 
     # config.models.gnn_saving_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checkpoints')
-    config.models.gnn_saving_dir = "/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/outputs/2022-05-22/09-58-22/checkpoints"
+    config.models.gnn_saving_dir = "/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/2022-09-10/11-19-07/checkpoints"
 
     config.explainers.explanation_result_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
     config.models.param = config.models.param[config.datasets.dataset_name]
@@ -43,7 +43,8 @@ def pipeline(config):
         device = torch.device('cpu')
 
     dataset = get_dataset(config.datasets.dataset_root,
-                          config.datasets.dataset_name)
+                          config.datasets.dataset_name,
+                          config.noise)
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
 
@@ -138,7 +139,7 @@ def pipeline(config):
     else:
         x_collector = XCollector()
         data = dataset.data
-        data.edge_index = add_self_loops(data.edge_index, num_nodes=data.num_nodes)[0]
+        data.edge_index = add_self_loops(data.edge_index, num_nodes=data.num_nodes[0])[0]
         node_indices = torch.where(dataset[0].test_mask * dataset[0].y != 0)[0].tolist()
         predictions = model(data).argmax(-1)
 
@@ -156,7 +157,8 @@ def pipeline(config):
                               subgraph_building_method=config.explainers.param.subgraph_building_method,
                               save_dir=explanation_saving_dir)
 
-        for node_idx in node_indices:
+        for i, node_idx in enumerate(node_indices):
+            print(f'{i+1}/{len(node_indices)}:', end=' ')
             data.to(device)
             saved_MCTSInfo_list = None
 

@@ -16,8 +16,8 @@ def pipeline(config):
     # config.models.gnn_saving_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checkpoints')
     # config.explainers.explanation_result_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
     config.models.gnn_saving_dir = \
-        '/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/outputs/' \
-        '2022-05-09/13-03-25/checkpoints'
+        '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/' \
+        '2022-08-31/14-10-37/checkpoints'
 
     config.models.param = config.models.param[config.datasets.dataset_name]
     config.explainers.param = config.explainers.param[config.datasets.dataset_name]
@@ -29,8 +29,10 @@ def pipeline(config):
         device = torch.device('cpu')
 
     # bbbp warning
-    dataset = get_dataset(config.datasets.dataset_root,
-                          config.datasets.dataset_name)
+    dataset = get_dataset(dataset_root=config.datasets.dataset_root,
+                          dataset_name=config.datasets.dataset_name,
+                          noise_conf=config.noise)
+
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
     if config.models.param.graph_classification:
@@ -74,25 +76,27 @@ def pipeline(config):
         for i, data in tqdm(enumerate(dataset[test_indices])):
             index += 1
             data.to(device)
-            prediction = model(data).argmax(-1).item()
-
-            if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
-                edge_masks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
-                edge_masks = [edge_mask.to(device) for edge_mask in edge_masks]
-                print(f"load example {test_indices[i]}.")
-                edge_masks, hard_edge_masks, related_preds = \
-                    gnn_explainer(data.x, data.edge_index,
-                                  sparsity=config.explainers.sparsity,
-                                  num_classes=dataset.num_classes,
-                                  edge_masks=edge_masks)
-            else:
-                edge_masks, hard_edge_masks, related_preds = \
-                    gnn_explainer(data.x, data.edge_index,
-                                  sparsity=config.explainers.sparsity,
-                                  num_classes=dataset.num_classes)
-                edge_masks = [edge_mask.to('cpu') for edge_mask in edge_masks]
-                torch.save(edge_masks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
-            x_collector.collect_data(hard_edge_masks, related_preds, label=prediction)
+            try:
+                prediction = model(data).argmax(-1).item()
+                if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
+                    edge_masks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                    edge_masks = [edge_mask.to(device) for edge_mask in edge_masks]
+                    print(f"load example {test_indices[i]}.")
+                    edge_masks, hard_edge_masks, related_preds = \
+                        gnn_explainer(data.x, data.edge_index,
+                                      sparsity=config.explainers.sparsity,
+                                      num_classes=dataset.num_classes,
+                                      edge_masks=edge_masks)
+                else:
+                    edge_masks, hard_edge_masks, related_preds = \
+                        gnn_explainer(data.x, data.edge_index,
+                                      sparsity=config.explainers.sparsity,
+                                      num_classes=dataset.num_classes)
+                    edge_masks = [edge_mask.to('cpu') for edge_mask in edge_masks]
+                    torch.save(edge_masks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                x_collector.collect_data(hard_edge_masks, related_preds, label=prediction)
+            except AssertionError as e:
+                print(e)
     else:
         data = dataset.data
         data.to(device)

@@ -88,7 +88,7 @@ class MolTree(object):
         for i, c in enumerate(cliques):
             cmol = get_clique_mol(self.mol, c)
             node = MolTreeNode(get_smiles(cmol), c)
-            self.nodes.append(node)
+            self.append(node)
             if min(c) == 0:
                 root = i
 

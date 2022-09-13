@@ -1,12 +1,15 @@
 import os
-import torch
-import pickle
-import numpy as np
 import os.path as osp
-from torch_geometric.utils import dense_to_sparse
-from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
-from torch_geometric.data.dataset import files_exist
+import pickle
 import shutil
+
+import numpy as np
+import torch
+from torch_geometric.data import Data, InMemoryDataset, download_url
+from torch_geometric.data.dataset import files_exist
+from torch_geometric.utils import dense_to_sparse
+
+from .noise import add_noise_features, add_noise_neighbours
 
 
 def read_ba2motif_data(folder: str, prefix):
@@ -52,8 +55,9 @@ class SynGraphDataset(InMemoryDataset):
         'ba_2motifs': ['BA_2Motifs', 'BA_2Motifs.pkl', 'BA_2Motifs']
     }
 
-    def __init__(self, root, name, transform=None, pre_transform=None):
+    def __init__(self, root, name, noise_conf=None, transform=None, pre_transform=None):
         self.name = name.lower()
+        self.noise_conf = noise_conf
         super(SynGraphDataset, self).__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
@@ -80,6 +84,25 @@ class SynGraphDataset(InMemoryDataset):
     def process(self):
         if self.name.lower() == 'BA_2Motifs'.lower():
             data_list = read_ba2motif_data(self.raw_dir, self.names[self.name][2])
+            if self.noise_conf.name == 'noise_nodes':
+                for i in range(len(data_list)):
+                    data_list[i] = add_noise_neighbours(
+                        data_list[i],
+                        prop_noise_nodes=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p,
+                        connectedness=self.noise_conf.connectedness,
+                        c=self.noise_conf.c,
+                        graph_classification=True
+                    )
+            elif self.noise_conf.name == 'noise_feats':
+                for i in range(len(data_list)):
+                    data_list[i] = add_noise_features(
+                        data_list[i],
+                        prop_noise_feats=self.noise_conf.prop,
+                        binary=self.noise_conf.binary,
+                        p=self.noise_conf.p
+                    )
 
             if self.pre_filter is not None:
                 data_list = [self.get(idx) for idx in range(len(self))]
@@ -90,9 +113,26 @@ class SynGraphDataset(InMemoryDataset):
                 data_list = [self.get(idx) for idx in range(len(self))]
                 data_list = [self.pre_transform(data) for data in data_list]
                 self.data, self.slices = self.collate(data_list)
+
         else:
             # Read data into huge `Data` list.
             data = self.read_syn_data()
+            if self.noise_conf.name == 'noise_nodes':
+                data = add_noise_neighbours(
+                    data,
+                    prop_noise_nodes=self.noise_conf.prop,
+                    binary=self.noise_conf.binary,
+                    p=self.noise_conf.p,
+                    connectedness=self.noise_conf.connectedness,
+                    c=self.noise_conf.c
+                )
+            elif self.noise_conf.name == 'noise_feats':
+                data = add_noise_features(
+                    data,
+                    prop_noise_feats=self.noise_conf.prop,
+                    binary=self.noise_conf.binary,
+                    p=self.noise_conf.p
+                )
             data = data if self.pre_transform is None else self.pre_transform(data)
             data_list = [data]
 
@@ -216,7 +256,8 @@ class BA_LRP(InMemoryDataset):
 
         for i in range(2, 20):
             data.x = torch.cat([data.x, torch.tensor([[1]], dtype=torch.float)], dim=0)
-            deg_reciprocal = torch.stack([1 / ((data.edge_index[0] == node_idx).float().sum() + epsilon) for node_idx in range(i)], dim=0)
+            deg_reciprocal = torch.stack(
+                [1 / ((data.edge_index[0] == node_idx).float().sum() + epsilon) for node_idx in range(i)], dim=0)
             sum_deg_reciprocal = deg_reciprocal.sum(dim=0, keepdim=True)
             probs = (deg_reciprocal / sum_deg_reciprocal).unsqueeze(0)
             prob_dist = torch.distributions.Categorical(probs)
@@ -248,4 +289,3 @@ class BA_LRP(InMemoryDataset):
 if __name__ == '__main__':
     # lrp_dataset = BA_LRP(root='.', num_per_class=10000)
     syn_dataset = SynGraphDataset(root='.', name='BA_Community')
-

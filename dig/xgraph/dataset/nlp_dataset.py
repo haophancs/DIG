@@ -6,6 +6,7 @@ import pickle
 import numpy as np
 import os.path as osp
 from torch_geometric.data import Data, InMemoryDataset
+from .noise import add_noise_neighbours, add_noise_features
 import traceback
 
 def undirected_graph(data):
@@ -105,8 +106,9 @@ class SentiGraphDataset(InMemoryDataset):
         which transfers the directed graph in original data into undirected graph before
         being saved to disk.
     """
-    def __init__(self, root, name, transform=None, pre_transform=undirected_graph):
+    def __init__(self, root, name, noise_conf=None, transform=None, pre_transform=undirected_graph):
         self.name = name
+        self.noise_conf = noise_conf
         super(SentiGraphDataset, self).__init__(root, transform, pre_transform)
         self.data, self.slices, self.supplement = torch.load(self.processed_paths[0])
 
@@ -141,6 +143,30 @@ class SentiGraphDataset(InMemoryDataset):
                       "https://drive.google.com/drive/folders/1dt0aGMBvCEUYzaG00TYu1D03GPO7305z?usp=sharing")
             raise SystemExit()
 
+        if self.noise_conf.name == 'noise_nodes':
+            data_list = [self.get(idx) for idx in range(len(self))]
+            for i in range(len(self)):
+                data_list[i] = add_noise_neighbours(
+                    data_list[i],
+                    prop_noise_nodes=self.noise_conf.prop,
+                    binary=self.noise_conf.binary,
+                    p=self.noise_conf.p,
+                    connectedness=self.noise_conf.connectedness,
+                    c=self.noise_conf.c,
+                    graph_classification=True
+                )
+            self.data, self.slices = self.collate(data_list)
+        elif self.noise_conf.name == 'noise_feats':
+            data_list = [self.get(idx) for idx in range(len(self))]
+            for i in range(len(self)):
+                data_list[i] = add_noise_features(
+                    data_list[i],
+                    prop_noise_feats=self.noise_conf.prop,
+                    binary=self.noise_conf.binary,
+                    p=self.noise_conf.p
+                )
+            self.data, self.slices = self.collate(data_list)
+
         if self.pre_filter is not None:
             data_list = [self.get(idx) for idx in range(len(self))]
             data_list = [data for data in data_list if self.pre_filter(data)]
@@ -150,6 +176,7 @@ class SentiGraphDataset(InMemoryDataset):
             data_list = [self.get(idx) for idx in range(len(self))]
             data_list = [self.pre_transform(data) for data in data_list]
             self.data, self.slices = self.collate(data_list)
+
         torch.save((self.data, self.slices, self.supplement), self.processed_paths[0])
 
 

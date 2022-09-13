@@ -16,8 +16,8 @@ def pipeline(config):
     # config.explainers.explanation_result_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
 
     config.models.gnn_saving_dir = \
-        '/Users/haophancs/Projects/gnn/DIG/benchmarks/xgraph/outputs/' \
-        '2022-05-21/14-06-15/checkpoints'
+        '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/' \
+        '2022-09-09/02-19-31/checkpoints'
 
     config.models.param = config.models.param[config.datasets.dataset_name]
     config.explainers.param = config.explainers.param[config.datasets.dataset_name]
@@ -28,8 +28,9 @@ def pipeline(config):
     else:
         device = torch.device('cpu')
 
-    dataset = get_dataset(config.datasets.dataset_root,
-                          config.datasets.dataset_name)
+    dataset = get_dataset(dataset_root=config.datasets.dataset_root,
+                          dataset_name=config.datasets.dataset_name,
+                          noise_conf=config.noise)
     dataset.data.x = dataset.data.x.float()
     dataset.data.y = dataset.data.y.squeeze().long()
     if config.models.param.graph_classification:
@@ -76,26 +77,29 @@ def pipeline(config):
     x_collector = XCollector()
     if config.models.param.graph_classification:
         for i, data in enumerate(dataset[test_indices]):
-            index += 1
-            data.to(device)
+            try:
+                index += 1
+                data.to(device)
 
-            if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
-                edge_masks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
-                edge_masks = [edge_mask.to(device) for edge_mask in edge_masks]
-                print(f"load example {test_indices[i]}.")
-                edge_masks, hard_edge_masks, related_preds = \
-                    gc_explainer(data.x, data.edge_index,
-                                 sparsity=config.explainers.sparsity,
-                                 num_classes=dataset.num_classes,
-                                 edge_masks=edge_masks)
-            else:
-                edge_masks, hard_edge_masks, related_preds = \
-                    gc_explainer(data.x, data.edge_index,
-                                 sparsity=config.explainers.sparsity,
-                                 num_classes=dataset.num_classes)
+                if os.path.isfile(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt')):
+                    edge_masks = torch.load(os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                    edge_masks = [edge_mask.to(device) for edge_mask in edge_masks]
+                    print(f"load example {test_indices[i]}.")
+                    edge_masks, hard_edge_masks, related_preds = \
+                        gc_explainer(data.x, data.edge_index,
+                                     sparsity=config.explainers.sparsity,
+                                     num_classes=dataset.num_classes,
+                                     edge_masks=edge_masks)
+                else:
+                    edge_masks, hard_edge_masks, related_preds = \
+                        gc_explainer(data.x, data.edge_index,
+                                     sparsity=config.explainers.sparsity,
+                                     num_classes=dataset.num_classes)
 
-                edge_masks = [edge_mask.to('cpu') for edge_mask in edge_masks]
-                torch.save(edge_masks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+                    edge_masks = [edge_mask.to('cpu') for edge_mask in edge_masks]
+                    torch.save(edge_masks, os.path.join(explanation_saving_dir, f'example_{test_indices[i]}.pt'))
+            except:
+                continue
 
             from torch_geometric.data import Batch
             prediction = model(data=Batch.from_data_list([data])).argmax(-1).item()
