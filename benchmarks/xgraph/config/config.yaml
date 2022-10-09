@@ -1,7 +1,7 @@
 defaults:
   - models: gcn
-  - datasets: ba_community 
-  - explainers: subgraphx 
+  - datasets: graph_sst2
+  - explainers: subgraphx
   - noise: nodes 
 device_id: 0
 model_name: GCN_3l

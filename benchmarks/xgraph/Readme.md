@@ -3,7 +3,7 @@
 ## Overview
 
 Benchmark for xgraph provides a systematic schema to compare different instance-wise explanation algorithms for GNNs.
-With the same datasets and evaluation metrics, we can measure the importance scores for the explanations provided by algorithms. 
+With the same datasets and evaluation metrics, we can measure the importance scores for the explanations provided by algorithms.
 
 <p align="center">
 <img src="imgs/xgraph.jpg" width="1000" class="center" alt="logo"/>
@@ -13,8 +13,8 @@ With the same datasets and evaluation metrics, we can measure the importance sco
 
 ## Implemented Algorithms
 
-Now, the xgraph benchmark provides unified comparison for seven existing algorithms. 
-The information about the seven algorithms is summarized in the following table. 
+Now, the xgraph benchmark provides unified comparison for seven existing algorithms.
+The information about the seven algorithms is summarized in the following table.
 
 | Method | Links | Brief description |
 | ------ | ----- | ------------------ |
@@ -31,9 +31,9 @@ Besides, we also provide the RandomExplainer which gives random explanations for
 
 
 ## Results
-We also provide the experiment results for GCN model on six different datasets. 
+We also provide the experiment results for GCN model on six different datasets.
 
-We provide the checkpoints [here](https://drive.google.com/drive/folders/19krHmYpGDmR4abDB3bz0fVLYUeFmsmR7?usp=sharing) 
+We provide the checkpoints [here](https://drive.google.com/drive/folders/19krHmYpGDmR4abDB3bz0fVLYUeFmsmR7?usp=sharing)
 and part of the results [here](https://drive.google.com/drive/folders/1zNm9i1XvAMeZsmvzS1fyeIwpnaU8AkK7?usp=sharing).
 
 
