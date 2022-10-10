@@ -1,8 +1,8 @@
 defaults:
   - models: gcn
-  - datasets: graph_sst2
-  - explainers: subgraphx
-  - noise: nodes 
+  - datasets: twitter
+  - explainers: gnn_explainer 
+  - noise: feats 
 device_id: 0
 model_name: GCN_3l
 record_filename: none

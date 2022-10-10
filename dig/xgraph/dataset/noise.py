@@ -15,7 +15,6 @@ def extract_test_nodes(data, num_samples=None, seed=42):
 
 
 def add_noise_features(data, prop_noise_feats=0.20, binary=False, p=0.5):
-    print("Adding noise features...")
     num_noise = int(data.x.size(1) * prop_noise_feats)
 
     # Number of nodes in the dataset

@@ -17,7 +17,7 @@ def pipeline(config):
     # config.explainers.explanation_result_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
     config.models.gnn_saving_dir = \
         '/Users/haophancs/Projects/archives/gnn/DIG/benchmarks/xgraph/outputs/' \
-        '2022-08-31/14-10-37/checkpoints'
+        '2022-10-10/16-04-33/checkpoints'
 
     config.models.param = config.models.param[config.datasets.dataset_name]
     config.explainers.param = config.explainers.param[config.datasets.dataset_name]
